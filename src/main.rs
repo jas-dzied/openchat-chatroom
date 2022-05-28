@@ -5,5 +5,5 @@ use chatroom;
 async fn main() {
     let name = env::args().nth(1).unwrap();
     let addr = env::args().nth(2).unwrap();
-    chatroom::host_room(name, addr).await.unwrap();
+    chatroom::host_room(name, addr, "").await.unwrap();
 }

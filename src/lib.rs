@@ -64,9 +64,9 @@ async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: Socke
     peer_map.lock().unwrap().remove(&addr);
 }
 
-pub async fn host_room(name: String, addr: String) -> Result<(), IoError> {
+pub async fn host_room(name: String, addr: String, pub_addr: String) -> Result<(), IoError> {
     let name_b64 = base64::encode_config(name, base64::URL_SAFE);
-    let url_b64 = base64::encode_config("ws://".to_string()+&addr, base64::URL_SAFE);
+    let url_b64 = base64::encode_config("ws://".to_string()+&pub_addr, base64::URL_SAFE);
     let client = reqwest::Client::new();
     client.post(format!("http://82.35.235.223:8000/add_server/{}/{}", name_b64, url_b64))
         .send()
