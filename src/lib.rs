@@ -64,26 +64,29 @@ async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: Socke
     peer_map.lock().unwrap().remove(&addr);
 }
 
-pub async fn host_room(name: String, addr: String, pub_addr: String) -> Result<(), IoError> {
-    let name_b64 = base64::encode_config(name, base64::URL_SAFE);
-    let url_b64 = base64::encode_config("ws://".to_string()+&pub_addr, base64::URL_SAFE);
-    let client = reqwest::Client::new();
-    client.post(format!("http://82.35.235.223:8000/add_server/{}/{}", name_b64, url_b64))
-        .send()
-        .await
-        .unwrap();
-
-    let state = PeerMap::new(Mutex::new(HashMap::new()));
-
-    // Create the event loop and TCP listener we'll accept connections on.
+pub async fn host_room(name: String, addr: String, pub_addr: String, link: Arc<Mutex<Option<String>>>) -> Result<(), IoError> {
     let try_socket = TcpListener::bind(&addr).await;
-    let listener = try_socket.expect("Failed to bind");
-    println!("Listening on: {}", addr);
-
-    // Let's spawn the handling of each connection in a separate task.
-    while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(handle_connection(state.clone(), stream, addr));
+    let name_clone = name.clone();
+    match try_socket {
+        Ok(listener) => {
+            let name_b64 = base64::encode_config(name, base64::URL_SAFE);
+            let url_b64 = base64::encode_config("ws://".to_string()+&pub_addr, base64::URL_SAFE);
+            let client = reqwest::Client::new();
+            client.post(format!("http://82.35.235.223:8000/add_server/{}/{}", name_b64, url_b64))
+                  .send()
+                  .await
+                  .unwrap();
+            println!("Sent confirmation to server");
+            let state = PeerMap::new(Mutex::new(HashMap::new()));
+            println!("Listening on: {}", addr);
+            *(link.lock().unwrap()) = Some(name_clone);
+            while let Ok((stream, addr)) = listener.accept().await {
+                tokio::spawn(handle_connection(state.clone(), stream, addr));
+            }
+            Ok(())
+        },
+        Err(e) => {
+            Err(e)
+        }
     }
-
-    Ok(())
 }
