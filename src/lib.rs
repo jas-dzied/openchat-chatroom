@@ -68,7 +68,7 @@ pub async fn host_room(name: String, addr: String) -> Result<(), IoError> {
     let name_b64 = base64::encode_config(name, base64::URL_SAFE);
     let url_b64 = base64::encode_config("ws://".to_string()+&addr, base64::URL_SAFE);
     let client = reqwest::Client::new();
-    client.post(format!("http://127.0.0.1:8000/add_server/{}/{}", name_b64, url_b64))
+    client.post(format!("http://82.35.235.223:8000/add_server/{}/{}", name_b64, url_b64))
         .send()
         .await
         .unwrap();
